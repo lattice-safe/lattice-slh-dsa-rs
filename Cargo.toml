@@ -1,0 +1,42 @@
+[package]
+name = "lattice-slh-dsa"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.70"
+authors = ["lattice-safe contributors"]
+description = "Pure Rust implementation of SLH-DSA (FIPS 205) / SPHINCS+ post-quantum digital signature scheme"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/lattice-safe/lattice-slh-dsa-rs"
+homepage = "https://github.com/lattice-safe"
+documentation = "https://docs.rs/lattice-slh-dsa"
+keywords = ["slh-dsa", "fips-205", "post-quantum", "cryptography", "sphincs"]
+categories = ["cryptography", "no-std"]
+
+[features]
+default = ["std"]
+std = ["getrandom"]
+getrandom = ["dep:getrandom"]
+
+[dependencies]
+sha3 = { version = "0.10", default-features = false }
+sha2 = { version = "0.10", default-features = false }
+zeroize = { version = "1", features = ["alloc"], default-features = false }
+getrandom = { version = "0.2", optional = true }
+
+[lib]
+name = "slh_dsa"
+path = "src/lib.rs"
+
+# [dev-dependencies]
+# criterion = { version = "0.5", features = ["html_reports"] }
+
+# [[bench]]
+# name = "slh_dsa_bench"
+# harness = false
+
+[profile.release]
+opt-level = 3
+
+[package.metadata.docs.rs]
+all-features = true

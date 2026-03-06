@@ -1,10 +1,10 @@
 //! FORS (Forest of Random Subsets) few-time signature for SLH-DSA.
 
-use alloc::vec;
-use crate::params::SlhDsaMode;
-use crate::hash::SpxCtx;
-use crate::thash::thash;
 use crate::address::*;
+use crate::hash::SpxCtx;
+use crate::params::SlhDsaMode;
+use crate::thash::thash;
+use alloc::vec;
 
 /// Convert message bits to FORS tree indices.
 fn message_to_indices(indices: &mut [u32], m: &[u8], mode: &SlhDsaMode) {
@@ -116,7 +116,11 @@ pub fn treehash(
             let tree_idx = idx >> (heights[offset - 1] + 1);
 
             set_tree_height(addr, heights[offset - 1] + 1, mode);
-            set_tree_index(addr, tree_idx + (idx_offset >> (heights[offset - 1] + 1)), mode);
+            set_tree_index(
+                addr,
+                tree_idx + (idx_offset >> (heights[offset - 1] + 1)),
+                mode,
+            );
 
             let two_nodes = stack[(offset - 2) * n..offset * n].to_vec();
             thash(
@@ -132,8 +136,7 @@ pub fn treehash(
 
             if ((leaf_idx >> heights[offset - 1]) ^ 0x1) == tree_idx {
                 let h = heights[offset - 1] as usize;
-                auth_path[h * n..(h + 1) * n]
-                    .copy_from_slice(&stack[(offset - 1) * n..offset * n]);
+                auth_path[h * n..(h + 1) * n].copy_from_slice(&stack[(offset - 1) * n..offset * n]);
             }
         }
     }
@@ -230,7 +233,13 @@ pub fn fors_pk_from_sig(
         set_tree_index(&mut fors_tree_addr, indices[i] + idx_offset, mode);
 
         let mut leaf = vec![0u8; n];
-        fors_sk_to_leaf(&mut leaf, &sig[sig_offset..sig_offset + n], ctx, &fors_tree_addr, mode);
+        fors_sk_to_leaf(
+            &mut leaf,
+            &sig[sig_offset..sig_offset + n],
+            ctx,
+            &fors_tree_addr,
+            mode,
+        );
         sig_offset += n;
 
         compute_root(

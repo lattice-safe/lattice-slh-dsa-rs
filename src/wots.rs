@@ -1,10 +1,10 @@
 //! WOTS+ one-time signature scheme for SLH-DSA.
 
-use alloc::vec;
-use crate::params::SlhDsaMode;
-use crate::hash::SpxCtx;
-use crate::thash::thash;
 use crate::address::*;
+use crate::hash::SpxCtx;
+use crate::params::SlhDsaMode;
+use crate::thash::thash;
+use alloc::vec;
 
 /// Compute base-w representation of `input`.
 fn base_w(output: &mut [u32], out_len: usize, input: &[u8], w: usize) {
@@ -104,13 +104,7 @@ pub fn wots_pk_from_sig(
 }
 
 /// Generate WOTS+ signature for a message (n-byte hash).
-pub fn wots_sign(
-    sig: &mut [u8],
-    msg: &[u8],
-    ctx: &SpxCtx,
-    addr: &mut Addr,
-    mode: &SlhDsaMode,
-) {
+pub fn wots_sign(sig: &mut [u8], msg: &[u8], ctx: &SpxCtx, addr: &mut Addr, mode: &SlhDsaMode) {
     let wots_len = mode.wots_len();
     let n = mode.n;
 

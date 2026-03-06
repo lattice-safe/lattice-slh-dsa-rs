@@ -3,7 +3,7 @@
 //! The address is a 32-byte array with fields at specific byte offsets.
 //! SHAKE and SHA-2 variants use different layouts.
 
-use crate::params::{SlhDsaMode, HashFamily};
+use crate::params::{HashFamily, SlhDsaMode};
 
 /// Address type constants.
 pub const ADDR_TYPE_WOTS: u8 = 0;

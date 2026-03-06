@@ -12,29 +12,31 @@
 //! # Quick Start
 //!
 //! ```rust
+//! use slh_dsa::safe_api::SlhDsaKeyPair;
 //! use slh_dsa::params::SLH_DSA_SHAKE_128F;
-//! use slh_dsa::sign::{keygen_seed, sign, verify};
 //!
-//! let mode = SLH_DSA_SHAKE_128F;
-//! let seed = vec![42u8; mode.seed_bytes()];
-//! let (pk, sk) = keygen_seed(mode, &seed);
-//! let sig = sign(&sk, b"Hello, post-quantum!", mode);
-//! assert!(verify(&pk, &sig, b"Hello, post-quantum!", mode));
+//! let kp = SlhDsaKeyPair::generate(SLH_DSA_SHAKE_128F).unwrap();
+//! let sig = kp.sign(b"Hello, post-quantum!").unwrap();
+//! assert!(slh_dsa::safe_api::SlhDsaSignature::verify(
+//!     sig.to_bytes(), kp.public_key(), b"Hello, post-quantum!", SLH_DSA_SHAKE_128F,
+//! ));
 //! ```
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
 
-pub mod params;
 pub mod address;
-pub mod hash;
-pub mod thash;
-pub mod wots;
 pub mod fors;
+pub mod hash;
 pub mod merkle;
+pub mod params;
+pub mod safe_api;
 pub mod sign;
+pub mod thash;
 mod utils;
+pub mod wots;
 
 pub use params::SlhDsaMode;
+pub use safe_api::{SlhDsaError, SlhDsaKeyPair, SlhDsaSignature};
 pub use sign::{keygen_seed, sign, verify};

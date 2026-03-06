@@ -1,12 +1,12 @@
 //! Merkle tree operations for the SLH-DSA hypertree.
 
-use alloc::vec;
-use crate::params::SlhDsaMode;
+use crate::address::*;
+use crate::fors;
 use crate::hash::SpxCtx;
+use crate::params::SlhDsaMode;
 use crate::thash::thash;
 use crate::wots;
-use crate::fors;
-use crate::address::*;
+use alloc::vec;
 
 /// Generate a WOTS+ leaf: generates the full WOTS+ pk, then hashes it.
 /// If this is the target leaf for signing, also computes the WOTS+ signature.
@@ -159,5 +159,15 @@ pub fn merkle_gen_root(root: &mut [u8], ctx: &SpxCtx, mode: &SlhDsaMode) {
     set_type(&mut t_addr, ADDR_TYPE_HASHTREE, mode);
 
     let mut dummy_auth = vec![0u8; tree_height * n];
-    fors::treehash(root, &mut dummy_auth, &leaves, 0, 0, tree_height, ctx, &mut t_addr, mode);
+    fors::treehash(
+        root,
+        &mut dummy_auth,
+        &leaves,
+        0,
+        0,
+        tree_height,
+        ctx,
+        &mut t_addr,
+        mode,
+    );
 }

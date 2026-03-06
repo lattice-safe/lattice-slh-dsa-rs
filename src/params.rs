@@ -1,7 +1,13 @@
 //! SLH-DSA parameter sets (FIPS 205).
 
+#[cfg(feature = "serde")]
+fn default_name() -> &'static str {
+    ""
+}
+
 /// Hash function family used by a parameter set.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum HashFamily {
     Shake,
     Sha2,
@@ -9,7 +15,9 @@ pub enum HashFamily {
 
 /// SLH-DSA parameter set.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SlhDsaMode {
+    #[cfg_attr(feature = "serde", serde(skip, default = "default_name"))]
     pub name: &'static str,
     pub hash: HashFamily,
     /// Security parameter (hash output length in bytes).
@@ -41,10 +49,18 @@ impl SlhDsaMode {
 
     pub const fn wots_len2(&self) -> usize {
         if self.wots_w == 16 {
-            if self.n <= 8 { 2 }
-            else if self.n <= 136 { 3 }
-            else { 4 }
-        } else if self.n <= 1 { 1 } else { 2 }
+            if self.n <= 8 {
+                2
+            } else if self.n <= 136 {
+                3
+            } else {
+                4
+            }
+        } else if self.n <= 1 {
+            1
+        } else {
+            2
+        }
     }
 
     pub const fn wots_len(&self) -> usize {
@@ -69,8 +85,7 @@ impl SlhDsaMode {
 
     /// Total signature size in bytes.
     pub const fn sig_bytes(&self) -> usize {
-        self.n + self.fors_bytes() + self.d * self.wots_bytes()
-            + self.full_height * self.n
+        self.n + self.fors_bytes() + self.d * self.wots_bytes() + self.full_height * self.n
     }
 
     /// Public key size in bytes.
@@ -111,54 +126,126 @@ impl SlhDsaMode {
 
 // FIPS 205 parameter sets — SHAKE variants
 pub const SLH_DSA_SHAKE_128S: SlhDsaMode = SlhDsaMode {
-    name: "SLH-DSA-SHAKE-128s", hash: HashFamily::Shake,
-    n: 16, full_height: 63, d: 7, fors_height: 12, fors_trees: 14, wots_w: 16,
+    name: "SLH-DSA-SHAKE-128s",
+    hash: HashFamily::Shake,
+    n: 16,
+    full_height: 63,
+    d: 7,
+    fors_height: 12,
+    fors_trees: 14,
+    wots_w: 16,
 };
 pub const SLH_DSA_SHAKE_128F: SlhDsaMode = SlhDsaMode {
-    name: "SLH-DSA-SHAKE-128f", hash: HashFamily::Shake,
-    n: 16, full_height: 66, d: 22, fors_height: 6, fors_trees: 33, wots_w: 16,
+    name: "SLH-DSA-SHAKE-128f",
+    hash: HashFamily::Shake,
+    n: 16,
+    full_height: 66,
+    d: 22,
+    fors_height: 6,
+    fors_trees: 33,
+    wots_w: 16,
 };
 pub const SLH_DSA_SHAKE_192S: SlhDsaMode = SlhDsaMode {
-    name: "SLH-DSA-SHAKE-192s", hash: HashFamily::Shake,
-    n: 24, full_height: 63, d: 7, fors_height: 14, fors_trees: 17, wots_w: 16,
+    name: "SLH-DSA-SHAKE-192s",
+    hash: HashFamily::Shake,
+    n: 24,
+    full_height: 63,
+    d: 7,
+    fors_height: 14,
+    fors_trees: 17,
+    wots_w: 16,
 };
 pub const SLH_DSA_SHAKE_192F: SlhDsaMode = SlhDsaMode {
-    name: "SLH-DSA-SHAKE-192f", hash: HashFamily::Shake,
-    n: 24, full_height: 66, d: 22, fors_height: 8, fors_trees: 33, wots_w: 16,
+    name: "SLH-DSA-SHAKE-192f",
+    hash: HashFamily::Shake,
+    n: 24,
+    full_height: 66,
+    d: 22,
+    fors_height: 8,
+    fors_trees: 33,
+    wots_w: 16,
 };
 pub const SLH_DSA_SHAKE_256S: SlhDsaMode = SlhDsaMode {
-    name: "SLH-DSA-SHAKE-256s", hash: HashFamily::Shake,
-    n: 32, full_height: 64, d: 8, fors_height: 14, fors_trees: 22, wots_w: 16,
+    name: "SLH-DSA-SHAKE-256s",
+    hash: HashFamily::Shake,
+    n: 32,
+    full_height: 64,
+    d: 8,
+    fors_height: 14,
+    fors_trees: 22,
+    wots_w: 16,
 };
 pub const SLH_DSA_SHAKE_256F: SlhDsaMode = SlhDsaMode {
-    name: "SLH-DSA-SHAKE-256f", hash: HashFamily::Shake,
-    n: 32, full_height: 68, d: 17, fors_height: 9, fors_trees: 35, wots_w: 16,
+    name: "SLH-DSA-SHAKE-256f",
+    hash: HashFamily::Shake,
+    n: 32,
+    full_height: 68,
+    d: 17,
+    fors_height: 9,
+    fors_trees: 35,
+    wots_w: 16,
 };
 
 // FIPS 205 parameter sets — SHA-2 variants
 pub const SLH_DSA_SHA2_128S: SlhDsaMode = SlhDsaMode {
-    name: "SLH-DSA-SHA2-128s", hash: HashFamily::Sha2,
-    n: 16, full_height: 63, d: 7, fors_height: 12, fors_trees: 14, wots_w: 16,
+    name: "SLH-DSA-SHA2-128s",
+    hash: HashFamily::Sha2,
+    n: 16,
+    full_height: 63,
+    d: 7,
+    fors_height: 12,
+    fors_trees: 14,
+    wots_w: 16,
 };
 pub const SLH_DSA_SHA2_128F: SlhDsaMode = SlhDsaMode {
-    name: "SLH-DSA-SHA2-128f", hash: HashFamily::Sha2,
-    n: 16, full_height: 66, d: 22, fors_height: 6, fors_trees: 33, wots_w: 16,
+    name: "SLH-DSA-SHA2-128f",
+    hash: HashFamily::Sha2,
+    n: 16,
+    full_height: 66,
+    d: 22,
+    fors_height: 6,
+    fors_trees: 33,
+    wots_w: 16,
 };
 pub const SLH_DSA_SHA2_192S: SlhDsaMode = SlhDsaMode {
-    name: "SLH-DSA-SHA2-192s", hash: HashFamily::Sha2,
-    n: 24, full_height: 63, d: 7, fors_height: 14, fors_trees: 17, wots_w: 16,
+    name: "SLH-DSA-SHA2-192s",
+    hash: HashFamily::Sha2,
+    n: 24,
+    full_height: 63,
+    d: 7,
+    fors_height: 14,
+    fors_trees: 17,
+    wots_w: 16,
 };
 pub const SLH_DSA_SHA2_192F: SlhDsaMode = SlhDsaMode {
-    name: "SLH-DSA-SHA2-192f", hash: HashFamily::Sha2,
-    n: 24, full_height: 66, d: 22, fors_height: 8, fors_trees: 33, wots_w: 16,
+    name: "SLH-DSA-SHA2-192f",
+    hash: HashFamily::Sha2,
+    n: 24,
+    full_height: 66,
+    d: 22,
+    fors_height: 8,
+    fors_trees: 33,
+    wots_w: 16,
 };
 pub const SLH_DSA_SHA2_256S: SlhDsaMode = SlhDsaMode {
-    name: "SLH-DSA-SHA2-256s", hash: HashFamily::Sha2,
-    n: 32, full_height: 64, d: 8, fors_height: 14, fors_trees: 22, wots_w: 16,
+    name: "SLH-DSA-SHA2-256s",
+    hash: HashFamily::Sha2,
+    n: 32,
+    full_height: 64,
+    d: 8,
+    fors_height: 14,
+    fors_trees: 22,
+    wots_w: 16,
 };
 pub const SLH_DSA_SHA2_256F: SlhDsaMode = SlhDsaMode {
-    name: "SLH-DSA-SHA2-256f", hash: HashFamily::Sha2,
-    n: 32, full_height: 68, d: 17, fors_height: 9, fors_trees: 35, wots_w: 16,
+    name: "SLH-DSA-SHA2-256f",
+    hash: HashFamily::Sha2,
+    n: 32,
+    full_height: 68,
+    d: 17,
+    fors_height: 9,
+    fors_trees: 35,
+    wots_w: 16,
 };
 
 #[cfg(test)]

@@ -1,6 +1,5 @@
 //! Utility functions for SLH-DSA.
 
-
 /// Convert bytes to u64 (big-endian), reading `n` bytes.
 pub fn bytes_to_ull(bytes: &[u8], n: usize) -> u64 {
     let mut result: u64 = 0;

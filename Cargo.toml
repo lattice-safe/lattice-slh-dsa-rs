@@ -1,6 +1,6 @@
 [package]
 name = "lattice-slh-dsa"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.70"
 authors = ["lattice-safe contributors"]
@@ -17,12 +17,19 @@ categories = ["cryptography", "no-std"]
 default = ["std"]
 std = ["getrandom"]
 getrandom = ["dep:getrandom"]
+serde = ["dep:serde"]
 
 [dependencies]
 sha3 = { version = "0.10", default-features = false }
 sha2 = { version = "0.10", default-features = false }
-zeroize = { version = "1", features = ["alloc"], default-features = false }
+zeroize = { version = "1", features = [
+    "alloc",
+    "derive",
+], default-features = false }
 getrandom = { version = "0.2", optional = true }
+serde = { version = "1", features = [
+    "derive",
+], default-features = false, optional = true }
 
 [lib]
 name = "slh_dsa"

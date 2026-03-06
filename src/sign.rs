@@ -1,14 +1,14 @@
 //! SLH-DSA keygen, sign, and verify (FIPS 205).
 
-use alloc::vec;
-use alloc::vec::Vec;
-use crate::params::SlhDsaMode;
-use crate::hash::{SpxCtx, gen_message_random, hash_message};
 use crate::address::*;
 use crate::fors;
+use crate::hash::{gen_message_random, hash_message, SpxCtx};
 use crate::merkle;
+use crate::params::SlhDsaMode;
 use crate::thash::thash;
 use crate::wots;
+use alloc::vec;
+use alloc::vec::Vec;
 
 /// Generate SLH-DSA key pair from a seed.
 ///
@@ -176,7 +176,14 @@ pub fn verify(pk: &[u8], sig: &[u8], m: &[u8], mode: SlhDsaMode) -> bool {
         sig_offset += mode.wots_bytes();
 
         let mut leaf = vec![0u8; n];
-        thash(&mut leaf, &wots_pk, mode.wots_len(), &ctx, &wots_pk_addr, &mode);
+        thash(
+            &mut leaf,
+            &wots_pk,
+            mode.wots_len(),
+            &ctx,
+            &wots_pk_addr,
+            &mode,
+        );
 
         fors::compute_root(
             &mut root,
@@ -216,7 +223,10 @@ mod tests {
         let sig = sign(&sk, msg, mode);
         assert_eq!(sig.len(), mode.sig_bytes());
 
-        assert!(verify(&pk, &sig, msg, mode), "signature verification failed");
+        assert!(
+            verify(&pk, &sig, msg, mode),
+            "signature verification failed"
+        );
     }
 
     #[test]

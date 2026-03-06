@@ -18,15 +18,24 @@ fn roundtrip_test(mode: SlhDsaMode, name: &str) {
     let sig = sign(&sk, msg, mode);
     assert_eq!(sig.len(), mode.sig_bytes(), "{name}: sig size mismatch");
 
-    assert!(verify(&pk, &sig, msg, mode), "{name}: signature verification failed");
+    assert!(
+        verify(&pk, &sig, msg, mode),
+        "{name}: signature verification failed"
+    );
 
     // Wrong message must fail
-    assert!(!verify(&pk, &sig, b"wrong message", mode), "{name}: should reject wrong message");
+    assert!(
+        !verify(&pk, &sig, b"wrong message", mode),
+        "{name}: should reject wrong message"
+    );
 
     // Tampered signature must fail
     let mut bad_sig = sig.clone();
     bad_sig[mode.n + 1] ^= 0xFF;
-    assert!(!verify(&pk, &bad_sig, msg, mode), "{name}: should reject tampered signature");
+    assert!(
+        !verify(&pk, &bad_sig, msg, mode),
+        "{name}: should reject tampered signature"
+    );
 }
 
 /// Helper: deterministic signing must be stable.
@@ -146,5 +155,8 @@ fn test_truncated_sig_fails() {
     let seed = vec![3u8; mode.seed_bytes()];
     let (pk, sk) = keygen_seed(mode, &seed);
     let sig = sign(&sk, b"test", mode);
-    assert!(!verify(&pk, &sig[..sig.len() - 1], b"test", mode), "truncated sig should reject");
+    assert!(
+        !verify(&pk, &sig[..sig.len() - 1], b"test", mode),
+        "truncated sig should reject"
+    );
 }

@@ -2,11 +2,11 @@
 //!
 //! Supports both SHAKE-256 and SHA-256 based instantiations.
 
+use crate::address::Addr;
+use crate::params::{HashFamily, SlhDsaMode};
+use crate::utils::bytes_to_ull;
 use alloc::vec;
 use alloc::vec::Vec;
-use crate::params::{SlhDsaMode, HashFamily};
-use crate::address::Addr;
-use crate::utils::bytes_to_ull;
 
 /// SPX context (holds seeds and precomputed state).
 pub struct SpxCtx {
@@ -25,8 +25,8 @@ impl SpxCtx {
 
 // ---- Helper: SHAKE-256 hash wrapper ----
 fn shake256(out: &mut [u8], inputs: &[&[u8]]) {
+    use sha3::digest::{ExtendableOutput, Update, XofReader};
     use sha3::Shake256;
-    use sha3::digest::{Update, ExtendableOutput, XofReader};
     let mut hasher = Shake256::default();
     for inp in inputs {
         hasher.update(inp);
@@ -37,8 +37,8 @@ fn shake256(out: &mut [u8], inputs: &[&[u8]]) {
 
 // ---- Helper: SHA-256 hash wrapper ----
 fn sha256(out: &mut [u8], inputs: &[&[u8]]) {
-    use sha2::Sha256;
     use sha2::digest::Digest;
+    use sha2::Sha256;
     let mut hasher = Sha256::new();
     for inp in inputs {
         sha2::digest::Digest::update(&mut hasher, *inp);
@@ -58,7 +58,10 @@ fn sha256_full(inputs: &[&[u8]]) -> [u8; 32] {
 pub fn prf_addr(out: &mut [u8], ctx: &SpxCtx, addr: &Addr, mode: &SlhDsaMode) {
     match mode.hash {
         HashFamily::Shake => {
-            shake256(&mut out[..mode.n], &[&ctx.pub_seed, addr.as_slice(), &ctx.sk_seed]);
+            shake256(
+                &mut out[..mode.n],
+                &[&ctx.pub_seed, addr.as_slice(), &ctx.sk_seed],
+            );
         }
         HashFamily::Sha2 => {
             // SHA-256: H(pub_seed_padded || addr_compressed || sk_seed)

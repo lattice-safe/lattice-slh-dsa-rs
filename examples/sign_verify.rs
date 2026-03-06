@@ -23,9 +23,20 @@ fn main() {
     // Verify (valid)
     let start = std::time::Instant::now();
     let valid = verify(&pk, &sig, msg, mode);
-    println!("Verify:  {:.2?} → {}", start.elapsed(), if valid { "✅ VALID" } else { "❌ INVALID" });
+    println!(
+        "Verify:  {:.2?} → {}",
+        start.elapsed(),
+        if valid { "✅ VALID" } else { "❌ INVALID" }
+    );
 
     // Verify (wrong message)
     let tampered = verify(&pk, &sig, b"tampered message", mode);
-    println!("Tamper:  → {}", if tampered { "❌ FALSE POSITIVE" } else { "✅ REJECTED" });
+    println!(
+        "Tamper:  → {}",
+        if tampered {
+            "❌ FALSE POSITIVE"
+        } else {
+            "✅ REJECTED"
+        }
+    );
 }

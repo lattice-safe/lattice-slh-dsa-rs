@@ -42,9 +42,5 @@ fn bench_shake_128s(c: &mut Criterion) {
     });
 }
 
-criterion_group!(
-    benches,
-    bench_shake_128f,
-    bench_shake_128s,
-);
+criterion_group!(benches, bench_shake_128f, bench_shake_128s,);
 criterion_main!(benches);

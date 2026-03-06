@@ -118,6 +118,10 @@ pub fn verify(pk: &[u8], sig: &[u8], m: &[u8], mode: SlhDsaMode) -> bool {
         return false;
     }
 
+    if pk.len() != mode.pk_bytes() {
+        return false;
+    }
+
     let pub_seed = &pk[..n];
     let pub_root = &pk[n..2 * n];
 

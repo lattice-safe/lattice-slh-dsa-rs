@@ -31,6 +31,7 @@ pub mod fors;
 pub mod hash;
 pub mod merkle;
 pub mod params;
+pub mod prelude;
 pub mod safe_api;
 pub mod sign;
 pub mod thash;

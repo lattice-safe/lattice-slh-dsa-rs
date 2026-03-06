@@ -1,6 +1,6 @@
 [package]
 name = "lattice-slh-dsa"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 rust-version = "1.70"
 authors = ["lattice-safe contributors"]
@@ -28,12 +28,12 @@ getrandom = { version = "0.2", optional = true }
 name = "slh_dsa"
 path = "src/lib.rs"
 
-# [dev-dependencies]
-# criterion = { version = "0.5", features = ["html_reports"] }
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
 
-# [[bench]]
-# name = "slh_dsa_bench"
-# harness = false
+[[bench]]
+name = "slh_dsa_bench"
+harness = false
 
 [profile.release]
 opt-level = 3

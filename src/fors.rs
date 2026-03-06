@@ -1,7 +1,6 @@
 //! FORS (Forest of Random Subsets) few-time signature for SLH-DSA.
 
 use alloc::vec;
-use alloc::vec::Vec;
 use crate::params::SlhDsaMode;
 use crate::hash::SpxCtx;
 use crate::thash::thash;
@@ -10,10 +9,10 @@ use crate::address::*;
 /// Convert message bits to FORS tree indices.
 fn message_to_indices(indices: &mut [u32], m: &[u8], mode: &SlhDsaMode) {
     let mut offset = 0usize;
-    for i in 0..mode.fors_trees {
-        indices[i] = 0;
+    for idx in indices.iter_mut().take(mode.fors_trees) {
+        *idx = 0;
         for j in 0..mode.fors_height {
-            indices[i] ^= (((m[offset >> 3] >> (offset & 0x7)) & 1) as u32) << j;
+            *idx ^= (((m[offset >> 3] >> (offset & 0x7)) & 1) as u32) << j;
             offset += 1;
         }
     }
@@ -31,6 +30,7 @@ fn fors_sk_to_leaf(leaf: &mut [u8], sk: &[u8], ctx: &SpxCtx, addr: &Addr, mode: 
 
 /// Compute the root of a subtree from a leaf and authentication path.
 /// Exact port of compute_root from C reference (utils.c).
+#[allow(clippy::too_many_arguments)]
 pub fn compute_root(
     root: &mut [u8],
     leaf: &[u8],
@@ -83,6 +83,7 @@ pub fn compute_root(
 
 /// Treehash: computes root and auth path.
 /// Exact port of treehash from C reference (utilsx1.c).
+#[allow(clippy::too_many_arguments)]
 pub fn treehash(
     root: &mut [u8],
     auth_path: &mut [u8],

@@ -29,7 +29,7 @@ fn shake256(out: &mut [u8], inputs: &[&[u8]]) {
     use sha3::digest::{Update, ExtendableOutput, XofReader};
     let mut hasher = Shake256::default();
     for inp in inputs {
-        hasher.update(*inp);
+        hasher.update(inp);
     }
     let mut reader = hasher.finalize_xof();
     reader.read(out);

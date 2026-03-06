@@ -44,9 +44,7 @@ impl SlhDsaMode {
             if self.n <= 8 { 2 }
             else if self.n <= 136 { 3 }
             else { 4 }
-        } else {
-            if self.n <= 1 { 1 } else { 2 }
-        }
+        } else if self.n <= 1 { 1 } else { 2 }
     }
 
     pub const fn wots_len(&self) -> usize {

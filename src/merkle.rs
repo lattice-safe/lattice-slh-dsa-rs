@@ -1,7 +1,6 @@
 //! Merkle tree operations for the SLH-DSA hypertree.
 
 use alloc::vec;
-use alloc::vec::Vec;
 use crate::params::SlhDsaMode;
 use crate::hash::SpxCtx;
 use crate::thash::thash;

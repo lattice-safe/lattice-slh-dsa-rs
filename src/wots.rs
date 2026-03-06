@@ -1,7 +1,6 @@
 //! WOTS+ one-time signature scheme for SLH-DSA.
 
 use alloc::vec;
-use alloc::vec::Vec;
 use crate::params::SlhDsaMode;
 use crate::hash::SpxCtx;
 use crate::thash::thash;
@@ -14,22 +13,22 @@ fn base_w(output: &mut [u32], out_len: usize, input: &[u8], w: usize) {
     let mut bits = 0u32;
     let mut total = 0u32;
 
-    for i in 0..out_len {
+    for item in output.iter_mut().take(out_len) {
         if bits == 0 {
             total = input[in_idx] as u32;
             in_idx += 1;
             bits += 8;
         }
         bits -= logw;
-        output[i] = (total >> bits) & ((w as u32) - 1);
+        *item = (total >> bits) & ((w as u32) - 1);
     }
 }
 
 /// Compute WOTS+ checksum.
 fn wots_checksum(csum_output: &mut [u32], msg_base_w: &[u32], mode: &SlhDsaMode) {
     let mut csum: u32 = 0;
-    for i in 0..mode.wots_len1() {
-        csum += (mode.wots_w as u32 - 1) - msg_base_w[i];
+    for val in msg_base_w.iter().take(mode.wots_len1()) {
+        csum += (mode.wots_w as u32 - 1) - val;
     }
 
     let csum_bits = mode.wots_len2() * mode.wots_logw();
@@ -37,8 +36,8 @@ fn wots_checksum(csum_output: &mut [u32], msg_base_w: &[u32], mode: &SlhDsaMode)
 
     let csum_bytes = (csum_bits + 7) / 8;
     let mut csum_buf = vec![0u8; csum_bytes];
-    for i in 0..csum_bytes {
-        csum_buf[i] = (csum >> (8 * (csum_bytes - 1 - i))) as u8;
+    for (i, byte) in csum_buf.iter_mut().enumerate() {
+        *byte = (csum >> (8 * (csum_bytes - 1 - i))) as u8;
     }
 
     base_w(csum_output, mode.wots_len2(), &csum_buf, mode.wots_w);

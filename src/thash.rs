@@ -36,7 +36,7 @@ pub fn thash(
             let mut hasher = Sha256::new();
             sha2::digest::Digest::update(&mut hasher, &ctx.pub_seed);
             if ctx.pub_seed.len() < 64 {
-                sha2::digest::Digest::update(&mut hasher, &vec![0u8; 64 - ctx.pub_seed.len()]);
+                sha2::digest::Digest::update(&mut hasher, vec![0u8; 64 - ctx.pub_seed.len()]);
             }
             sha2::digest::Digest::update(&mut hasher, &addr[..22]);
             sha2::digest::Digest::update(&mut hasher, &input[..input_len]);

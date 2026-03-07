@@ -112,18 +112,20 @@ pub fn wots_sign(sig: &mut [u8], msg: &[u8], ctx: &SpxCtx, addr: &mut Addr, mode
     let mut lengths = vec![0u32; wots_len];
     chain_lengths(&mut lengths, msg, mode);
 
+    let mut sk = vec![0u8; n];
+    let mut chain_out = vec![0u8; n];
+
     for i in 0..wots_len {
         set_chain_addr(addr, i as u32, mode);
         set_hash_addr(addr, 0, mode);
         // C reference: set type to WOTSPRF before prf_addr, then revert to WOTS
         set_type(addr, ADDR_TYPE_WOTSPRF, mode);
-        let mut sk = vec![0u8; n];
+        sk.iter_mut().for_each(|b| *b = 0);
         crate::hash::prf_addr(&mut sk, ctx, addr, mode);
         set_type(addr, ADDR_TYPE_WOTS, mode);
         // Apply chain up to lengths[i]
-        let mut chain_out = vec![0u8; n];
         gen_chain(&mut chain_out, &sk, 0, lengths[i], ctx, addr, mode);
-        sk.zeroize();
         sig[i * n..(i + 1) * n].copy_from_slice(&chain_out);
     }
+    sk.zeroize();
 }

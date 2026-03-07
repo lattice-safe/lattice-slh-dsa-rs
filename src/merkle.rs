@@ -39,18 +39,20 @@ fn wots_gen_leaf_and_sign(
     let mut wots_pk = vec![0u8; wots_len * n];
     let is_signing = wots_sig.is_some();
 
+    let mut sk = vec![0u8; n];
+    let mut val = vec![0u8; n];
+
     for i in 0..wots_len {
         set_chain_addr(&mut leaf_addr, i as u32, mode);
         set_hash_addr(&mut leaf_addr, 0, mode);
 
         // C reference: set type to WOTSPRF before prf_addr, then revert to WOTS
         set_type(&mut leaf_addr, ADDR_TYPE_WOTSPRF, mode);
-        let mut sk = vec![0u8; n];
+        sk.iter_mut().for_each(|b| *b = 0);
         crate::hash::prf_addr(&mut sk, ctx, &leaf_addr, mode);
         set_type(&mut leaf_addr, ADDR_TYPE_WOTS, mode);
 
-        let mut val = sk.clone();
-        sk.zeroize();
+        val.copy_from_slice(&sk);
 
         if is_signing {
             for j in 0..steps[i] {
@@ -77,6 +79,7 @@ fn wots_gen_leaf_and_sign(
 
         wots_pk[i * n..(i + 1) * n].copy_from_slice(&val);
     }
+    sk.zeroize();
 
     thash(leaf, &wots_pk, wots_len, ctx, &pk_addr, mode);
 }

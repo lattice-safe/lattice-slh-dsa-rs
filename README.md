@@ -9,9 +9,11 @@ Pure Rust implementation of **SLH-DSA** (FIPS 205) — the stateless hash-based 
 ## Features
 
 - ✅ **FIPS 205 compliant** — all 12 parameter sets (6 SHAKE + 6 SHA-2)
-- 🦀 **Pure Rust** — no C/ASM dependencies
-- 🔒 **`no_std` compatible** — suitable for embedded targets  
+- 🦀 **Pure Rust** — no C/ASM dependencies, `#![forbid(unsafe_code)]`
+- 🔒 **`no_std` compatible** — suitable for embedded and WASM targets
 - 🧹 **Zeroization** — sensitive keys cleared on drop
+- 📦 **Typed safe API** — `SlhDsaKeyPair`, `SlhDsaSignature`, `SlhDsaError`
+- 🔑 **Optional serde** — serialize/deserialize keys and signatures
 
 ## Parameter Sets
 
@@ -26,6 +28,19 @@ Pure Rust implementation of **SLH-DSA** (FIPS 205) — the stateless hash-based 
 
 ## Quick Start
 
+### Safe API (recommended)
+
+```rust
+use slh_dsa::{SlhDsaKeyPair, SlhDsaSignature};
+use slh_dsa::params::SLH_DSA_SHAKE_128F;
+
+let kp = SlhDsaKeyPair::generate(SLH_DSA_SHAKE_128F).unwrap();
+let sig = kp.sign(b"Hello, post-quantum!").unwrap();
+assert!(SlhDsaSignature::verify(sig.to_bytes(), kp.public_key(), b"Hello, post-quantum!", SLH_DSA_SHAKE_128F));
+```
+
+### Low-level API
+
 ```rust
 use slh_dsa::params::SLH_DSA_SHAKE_128F;
 use slh_dsa::sign::{keygen_seed, sign, verify};
@@ -37,10 +52,20 @@ let sig = sign(&sk, b"Hello, post-quantum!", mode);
 assert!(verify(&pk, &sig, b"Hello, post-quantum!", mode));
 ```
 
+## Features
+
+| Feature | Default | Description |
+|---------|---------|-------------|
+| `std` | ✅ | Standard library support |
+| `getrandom` | ✅ (via std) | OS entropy for `SlhDsaKeyPair::generate()` |
+| `serde` | ❌ | Serialize/deserialize keys and signatures |
+
 ## Architecture
 
 | Module | Description |
 |---|---|
+| `safe_api` | **High-level typed API** — `SlhDsaKeyPair`, `SlhDsaError`, etc. |
+| `sign` | Top-level keygen, sign, verify API |
 | `params` | All 12 FIPS 205 parameter sets |
 | `address` | ADRS structure with byte-level encoding (SHAKE/SHA-2 layouts) |
 | `hash` | PRF, H_msg, gen_message_random (SHAKE-256 + SHA-256/HMAC) |
@@ -48,7 +73,6 @@ assert!(verify(&pk, &sig, b"Hello, post-quantum!", mode));
 | `wots` | WOTS+ one-time signatures (base-w, chain, sign/verify) |
 | `fors` | FORS few-time signatures (treehash + auth paths) |
 | `merkle` | Hypertree Merkle signing and root generation |
-| `sign` | Top-level keygen, sign, verify API |
 
 ## Part of lattice-safe-suite
 
@@ -57,9 +81,9 @@ This crate implements **FIPS 205 (SLH-DSA)** as part of the [`lattice-safe-suite
 | Standard | Crate | Algorithm |
 |---|---|---|
 | FIPS 203 | [`lattice-kyber`](https://crates.io/crates/lattice-kyber) | ML-KEM (Kyber) |
-| FIPS 204 | [`lattice-dilithium`](https://crates.io/crates/lattice-dilithium) | ML-DSA (Dilithium) |
+| FIPS 204 | [`dilithium-rs`](https://crates.io/crates/dilithium-rs) | ML-DSA (Dilithium) |
 | FIPS 205 | **`lattice-slh-dsa`** | SLH-DSA (SPHINCS+) |
-| FIPS 206 | [`lattice-falcon`](https://crates.io/crates/lattice-falcon) | FN-DSA (Falcon) |
+| FIPS 206 | [`falcon-rs`](https://crates.io/crates/falcon-rs) | FN-DSA (Falcon) |
 
 ## License
 

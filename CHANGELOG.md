@@ -2,7 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.1.0] - 2026-03-07
+## [0.3.3] — 2026-03-07
+
+### Added
+- `#![forbid(unsafe_code)]` — enforced crate-wide
+- CI: MSRV (1.70), WASM build, serde test, bench compile, cargo-deny
+
+### Changed
+- Expanded `SECURITY.md` with caveats, dependency audit, version update (0.3.x)
+- Updated README with Safe API examples, feature table, module documentation
+- CI clippy now uses `--all-targets --all-features`
+
+## [0.3.2] — 2026-03-07
+
+### Added
+- Safe API: `SlhDsaKeyPair`, `SlhDsaSignature`, `SlhDsaError`
+- Serde support behind `serde` feature flag
+- Getrandom support for randomized keygen
+- 3 examples (keygen, sign_verify, serialize)
+- Benchmarks with Criterion
+- Fuzz target
+- 48 tests (integration + KAT + safe_api + coverage + doctests)
+
+## [0.1.0] — 2026-03-07
 
 ### Added
 - Initial release of `lattice-slh-dsa` — pure Rust SLH-DSA (FIPS 205).

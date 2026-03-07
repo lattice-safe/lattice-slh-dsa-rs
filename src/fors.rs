@@ -5,6 +5,7 @@ use crate::hash::SpxCtx;
 use crate::params::SlhDsaMode;
 use crate::thash::thash;
 use alloc::vec;
+use zeroize::Zeroize;
 
 /// Convert message bits to FORS tree indices.
 fn message_to_indices(indices: &mut [u32], m: &[u8], mode: &SlhDsaMode) {
@@ -182,6 +183,7 @@ pub fn fors_sign(
             fors_gen_sk(&mut sk, ctx, &leaf_addr, mode);
             set_type(&mut leaf_addr, ADDR_TYPE_FORSTREE, mode);
             fors_sk_to_leaf(&mut leaves[j * n..(j + 1) * n], &sk, ctx, &leaf_addr, mode);
+            sk.zeroize();
         }
 
         let mut tree_addr: Addr = [0; ADDR_BYTES];

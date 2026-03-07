@@ -7,6 +7,7 @@ use crate::params::{HashFamily, SlhDsaMode};
 use crate::utils::bytes_to_ull;
 use alloc::vec;
 use alloc::vec::Vec;
+use zeroize::Zeroize;
 
 /// SPX context (holds seeds and precomputed state).
 pub struct SpxCtx {
@@ -20,6 +21,12 @@ impl SpxCtx {
             pub_seed: vec![0u8; n],
             sk_seed: vec![0u8; n],
         }
+    }
+}
+
+impl Drop for SpxCtx {
+    fn drop(&mut self) {
+        self.sk_seed.zeroize();
     }
 }
 

@@ -5,6 +5,7 @@ use crate::hash::SpxCtx;
 use crate::params::SlhDsaMode;
 use crate::thash::thash;
 use alloc::vec;
+use zeroize::Zeroize;
 
 /// Compute base-w representation of `input`.
 fn base_w(output: &mut [u32], out_len: usize, input: &[u8], w: usize) {
@@ -122,6 +123,7 @@ pub fn wots_sign(sig: &mut [u8], msg: &[u8], ctx: &SpxCtx, addr: &mut Addr, mode
         // Apply chain up to lengths[i]
         let mut chain_out = vec![0u8; n];
         gen_chain(&mut chain_out, &sk, 0, lengths[i], ctx, addr, mode);
+        sk.zeroize();
         sig[i * n..(i + 1) * n].copy_from_slice(&chain_out);
     }
 }

@@ -107,11 +107,13 @@ pub fn copy_keypair_addr(out: &mut Addr, src: &Addr, mode: &SlhDsaMode) {
 }
 
 pub fn set_chain_addr(addr: &mut Addr, chain: u32, mode: &SlhDsaMode) {
+    debug_assert!(chain <= 255, "chain address overflow: {chain}");
     let (_, _, _, _, off_chain, ..) = offsets(mode);
     addr[off_chain] = chain as u8;
 }
 
 pub fn set_hash_addr(addr: &mut Addr, hash: u32, mode: &SlhDsaMode) {
+    debug_assert!(hash <= 255, "hash address overflow: {hash}");
     let (_, _, _, _, _, off_hash, ..) = offsets(mode);
     addr[off_hash] = hash as u8;
 }

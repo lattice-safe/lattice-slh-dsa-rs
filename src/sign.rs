@@ -9,6 +9,7 @@ use crate::thash::thash;
 use crate::wots;
 use alloc::vec;
 use alloc::vec::Vec;
+use subtle::ConstantTimeEq;
 
 /// Generate SLH-DSA key pair from a seed.
 ///
@@ -19,7 +20,9 @@ use alloc::vec::Vec;
 /// - sk = [SK_SEED || SK_PRF || PUB_SEED || root]  (4*n bytes)
 pub fn keygen_seed(mode: SlhDsaMode, seed: &[u8]) -> (Vec<u8>, Vec<u8>) {
     let n = mode.n;
-    assert!(seed.len() >= mode.seed_bytes(), "seed too short");
+    if seed.len() < mode.seed_bytes() {
+        return (vec![], vec![]);
+    }
 
     let mut sk = vec![0u8; mode.sk_bytes()];
     let mut pk = vec![0u8; mode.pk_bytes()];
@@ -43,6 +46,10 @@ pub fn keygen_seed(mode: SlhDsaMode, seed: &[u8]) -> (Vec<u8>, Vec<u8>) {
 /// Sign a message.
 pub fn sign(sk: &[u8], m: &[u8], mode: SlhDsaMode) -> Vec<u8> {
     let n = mode.n;
+
+    if sk.len() < mode.sk_bytes() {
+        return vec![];
+    }
 
     let sk_seed = &sk[..n];
     let sk_prf = &sk[n..2 * n];
@@ -206,7 +213,7 @@ pub fn verify(pk: &[u8], sig: &[u8], m: &[u8], mode: SlhDsaMode) -> bool {
         tree >>= mode.tree_height();
     }
 
-    root == pub_root
+    root.ct_eq(pub_root).into()
 }
 
 #[cfg(test)]

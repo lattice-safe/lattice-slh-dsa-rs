@@ -1,6 +1,6 @@
 [package]
 name = "lattice-slh-dsa"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 rust-version = "1.70"
 authors = ["lattice-safe contributors"]
@@ -27,6 +27,7 @@ zeroize = { version = "1", features = [
     "derive",
 ], default-features = false }
 getrandom = { version = "0.2", optional = true }
+subtle = { version = "2", default-features = false }
 serde = { version = "1", features = [
     "derive",
 ], default-features = false, optional = true }

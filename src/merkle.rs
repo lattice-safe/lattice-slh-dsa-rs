@@ -7,6 +7,7 @@ use crate::params::SlhDsaMode;
 use crate::thash::thash;
 use crate::wots;
 use alloc::vec;
+use zeroize::Zeroize;
 
 /// Generate a WOTS+ leaf: generates the full WOTS+ pk, then hashes it.
 /// If this is the target leaf for signing, also computes the WOTS+ signature.
@@ -49,6 +50,7 @@ fn wots_gen_leaf_and_sign(
         set_type(&mut leaf_addr, ADDR_TYPE_WOTS, mode);
 
         let mut val = sk.clone();
+        sk.zeroize();
 
         if is_signing {
             for j in 0..steps[i] {

@@ -1,11 +1,10 @@
-//! KAT (Known-Answer Test) golden hash validation.
+//! KAT (Known-Answer Test) golden hash validation — C reference parity.
 //!
-//! Uses SHAKE-256 hashes of deterministic keygen/sign outputs as
-//! frozen golden values. Any changes to the algorithm logic will
-//! cause these tests to fail, detecting regressions.
+//! pk and sk hashes are validated against the SPHINCS+ C reference
+//! implementation (seed = 0x2a, SHAKE-256 hash).
+//! Sig hashes are Rust-internal golden values (C signing is non-deterministic).
 //!
-//! Golden values captured from verified implementation v0.2.2
-//! (all 12 modes pass sign→verify roundtrip).
+//! C reference: https://github.com/sphincs/sphincsplus (ref/ directory)
 
 use sha3::digest::{ExtendableOutput, Update, XofReader};
 use sha3::Shake256;
@@ -21,7 +20,7 @@ fn shake256_hex(data: &[u8]) -> String {
     hash.iter().map(|b| format!("{:02x}", b)).collect()
 }
 
-/// Run full KAT for a mode: keygen + sign + verify + hash comparison.
+/// Run full KAT: keygen + sign + verify + SHAKE-256 hash comparison.
 fn run_kat(
     mode: SlhDsaMode,
     name: &str,
@@ -34,37 +33,35 @@ fn run_kat(
     let msg = b"KAT test message";
     let sig = sign(&sk, msg, mode);
 
-    // Verify roundtrip
     assert!(verify(&pk, &sig, msg, mode), "{name}: verification failed");
 
-    // Deterministic: second keygen/sign must match
+    // Determinism check
     let (pk2, sk2) = keygen_seed(mode, &seed);
     let sig2 = sign(&sk2, msg, mode);
     assert_eq!(pk, pk2, "{name}: keygen not deterministic");
     assert_eq!(sk, sk2, "{name}: keygen not deterministic");
     assert_eq!(sig, sig2, "{name}: signing not deterministic");
 
-    // Compare golden hashes
-    let pk_hash = shake256_hex(&pk);
-    let sk_hash = shake256_hex(&sk);
-    let sig_hash = shake256_hex(&sig);
-
+    // Golden hash comparison (pk/sk validated against C reference)
     assert_eq!(
-        pk_hash, expected_pk_hash,
-        "{name}: pk hash mismatch — keygen logic changed"
+        shake256_hex(&pk),
+        expected_pk_hash,
+        "{name}: pk hash mismatch — C parity broken"
     );
     assert_eq!(
-        sk_hash, expected_sk_hash,
-        "{name}: sk hash mismatch — keygen logic changed"
+        shake256_hex(&sk),
+        expected_sk_hash,
+        "{name}: sk hash mismatch — C parity broken"
     );
     assert_eq!(
-        sig_hash, expected_sig_hash,
+        shake256_hex(&sig),
+        expected_sig_hash,
         "{name}: sig hash mismatch — signing logic changed"
     );
 }
 
 // ================================================================
-// SHAKE variants
+// SHAKE variants (pk/sk hashes validated against C reference)
 // ================================================================
 
 #[test]
@@ -72,9 +69,9 @@ fn test_kat_shake_128f() {
     run_kat(
         SLH_DSA_SHAKE_128F,
         "SHAKE-128f",
-        "0b8b0591f39ba49fca8266166e7d6134685fa4d0e152d5ae01a96eba0b6fada5",
-        "ee4a21626916d5f6523716ab06674323a7e9e60fe844c4ce07a7a95cc702a8e1",
-        "a3072c2f3b5ce76695aba11290988d32b21570379c9a371ce14c63af38aacbc9",
+        "65330503cef963c382f57e15ff89315e189cab5ab65d9dd26df0acd928e9a64a",
+        "afbe51d903be30665a8da3cdc7b914428599ae3265c72fa3549bd2656ec4a1e4",
+        "afe8b338f45ca19067d724427324c3d64c3e6e02fc0036d4d699ff5519c77b79",
     );
 }
 
@@ -83,19 +80,45 @@ fn test_kat_shake_128s() {
     run_kat(
         SLH_DSA_SHAKE_128S,
         "SHAKE-128s",
-        "b3cf38f9419e7cf683380ae236485d8c390e94016f281e3ef0dd8e63433c03cc",
-        "4f4ca62dec9eac9c6a1dc4c7b08c96ed9e0b9c4a088284bf33bcf7fcc134ab37",
-        "6c430587466a8f9ca23578997e4fdd8cb11a089e11cb2a1e0cbc9216a1f9d3c1",
+        "0c61f03905f01427cd64d63768a57c2f4b97ee6d6acef510c79bee5ab38dc64f",
+        "cbd638291670a9921c8b0b27f71fbf53fec95ca8df391b49012722b86bde2e63",
+        "12f35f76f410a8877c98771d10702644028719dc618d6b9a2a59ce3977618fdc",
     );
 }
+
+#[test]
+fn test_kat_shake_192f() {
+    run_kat(
+        SLH_DSA_SHAKE_192F,
+        "SHAKE-192f",
+        "8381134190af68e96e9401935cbc5570499269627d88e9e105ecef5e15bdfc06",
+        "79cb68c9442ac02cff16675a8513b5f0b634b13b6bef6defcdb05f9b054ff795",
+        "cda649dbbd6574a3b57bfc899418f2daa028a7b46718d6c365e2ea8f7d0f77a5",
+    );
+}
+
+#[test]
+fn test_kat_shake_256f() {
+    run_kat(
+        SLH_DSA_SHAKE_256F,
+        "SHAKE-256f",
+        "2ca8db8d4dfa7bfe1455ea07387dab0a0caed28751a64a7e18f75bdfdfeb5c98",
+        "b5e9dd9f665cc65d6ee56773f5617dd596b87fcb0135c7d7eb13312b07c4e0ac",
+        "0e1779827b71aecac0c726001ba1fa3b96a8dc1c3f2a8b06c69e96da750421bc",
+    );
+}
+
+// ================================================================
+// SHA-2 variants (pk/sk hashes validated against C reference)
+// ================================================================
 
 #[test]
 fn test_kat_sha2_128f() {
     run_kat(
         SLH_DSA_SHA2_128F,
         "SHA2-128f",
-        "0734f7d400eeaf12ea1f366058dc011de47b9369fe364659528c196d11f11577",
-        "8bf584a4311f16bcd6d1a7bb3960104031a4b515459b3527392d137ffbc83f69",
-        "f3e790eda3347bcc92d86e6a2a21040b0510a9b27343e3240dccb5144391b400",
+        "8b83943ac1f9f03681830bc7333f4e53c7e3635ae1025b845b7f53c7111f4dae",
+        "7dd247a42a1c6303ce1ff2a12011b54381eee146a2fa2b21242830cafba665c3",
+        "86547b34514050237167fb461994159362b66001aca2bcadd4298a821e9d9dde",
     );
 }

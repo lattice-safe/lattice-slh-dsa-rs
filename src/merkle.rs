@@ -42,8 +42,11 @@ fn wots_gen_leaf_and_sign(
         set_chain_addr(&mut leaf_addr, i as u32, mode);
         set_hash_addr(&mut leaf_addr, 0, mode);
 
+        // C reference: set type to WOTSPRF before prf_addr, then revert to WOTS
+        set_type(&mut leaf_addr, ADDR_TYPE_WOTSPRF, mode);
         let mut sk = vec![0u8; n];
         crate::hash::prf_addr(&mut sk, ctx, &leaf_addr, mode);
+        set_type(&mut leaf_addr, ADDR_TYPE_WOTS, mode);
 
         let mut val = sk.clone();
 

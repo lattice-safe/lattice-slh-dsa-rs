@@ -8,7 +8,11 @@ Pure Rust implementation of **SLH-DSA** (FIPS 205) — the stateless hash-based 
 
 ## Features
 
-- ✅ **FIPS 205 compliant** — all 12 parameter sets (6 SHAKE + 6 SHA-2)
+- ✅ **FIPS 205 compliant** — all 12 parameter sets (6 SHAKE + 6 SHA-2), pure
+  variant with context strings, deterministic and hedged signing
+- 🔁 **Interop-tested** — keygen and signatures cross-validated byte-for-byte
+  against the independent RustCrypto [`slh-dsa`](https://crates.io/crates/slh-dsa)
+  crate (ACVP-tested) in CI
 - 🦀 **Pure Rust** — no C/ASM dependencies, `#![forbid(unsafe_code)]`
 - 🔒 **`no_std` compatible** — suitable for embedded and WASM targets
 - 🧹 **Zeroization** — sensitive keys cleared on drop
@@ -60,6 +64,34 @@ assert!(verify(&pk, &sig, b"Hello, post-quantum!", mode));
 | `getrandom` | ✅ (via std) | OS entropy for `SlhDsaKeyPair::generate()` |
 | `serde` | ❌ | Serialize/deserialize keys and signatures |
 
+### Context strings (FIPS 205 pure variant)
+
+`sign`/`verify` use an empty context. To bind a domain-separation context (up to 255 bytes):
+
+```rust
+use slh_dsa::params::SLH_DSA_SHAKE_128F;
+use slh_dsa::safe_api::{SlhDsaKeyPair, SlhDsaSignature};
+
+let kp = SlhDsaKeyPair::generate(SLH_DSA_SHAKE_128F).unwrap();
+let sig = kp.sign_with_context(b"msg", b"my-app-v1").unwrap();
+assert!(SlhDsaSignature::verify_with_context(
+    sig.to_bytes(), kp.public_key(), b"msg", b"my-app-v1", SLH_DSA_SHAKE_128F,
+));
+```
+
+The FIPS 205 *internal* functions (`sign_internal`/`verify_internal`, raw message,
+optional hedged randomness) are exposed for KATs and higher-level schemes.
+
+## Compatibility & MSRV
+
+- **MSRV**: Rust 1.71.
+- **0.4.0 is a breaking release**: versions before 0.4.0 implemented round-3
+  SPHINCS+ semantics and are **not FIPS 205 interoperable** — 0.3.x signatures
+  do not verify under 0.4.0 (and SHA2-192/256 public keys differ). Re-generate
+  signatures (and re-derive SHA2-192/256 keys) after upgrading.
+- Interoperability is enforced in CI by byte-for-byte comparison against the
+  independent RustCrypto [`slh-dsa`](https://crates.io/crates/slh-dsa) crate.
+
 ## Architecture
 
 | Module | Description |
@@ -68,7 +100,7 @@ assert!(verify(&pk, &sig, b"Hello, post-quantum!", mode));
 | `sign` | Top-level keygen, sign, verify API |
 | `params` | All 12 FIPS 205 parameter sets |
 | `address` | ADRS structure with byte-level encoding (SHAKE/SHA-2 layouts) |
-| `hash` | PRF, H_msg, gen_message_random (SHAKE-256 + SHA-256/HMAC) |
+| `hash` | PRF, H_msg, PRF_msg (SHAKE-256; SHA-256/SHA-512 + HMAC + MGF1 per FIPS 205 §11.2) |
 | `thash` | Tweakable hash T_l |
 | `wots` | WOTS+ one-time signatures (base-w, chain, sign/verify) |
 | `fors` | FORS few-time signatures (treehash + auth paths) |

@@ -9,6 +9,22 @@
 //! - SLH-DSA-192s / SLH-DSA-192f (NIST Level 3)
 //! - SLH-DSA-256s / SLH-DSA-256f (NIST Level 5)
 //!
+//! # FIPS 205 conformance
+//!
+//! [`sign`] / [`verify`] implement the FIPS 205 **pure** variant with an
+//! empty context string, using deterministic signing (`opt_rand = PK.seed`,
+//! Algorithm 22). Use [`sign_ctx`] / [`verify_ctx`] to bind a context string
+//! (up to 255 bytes), and [`sign_internal`] / [`verify_internal`] for the raw
+//! internal functions (KATs, or building HashSLH-DSA-style schemes on top).
+//! Hedged signing is available by passing `addrnd` to [`sign_internal`].
+//!
+//! Interoperability is enforced in CI: key generation and signatures are
+//! compared byte-for-byte against the independent RustCrypto `slh-dsa`
+//! crate across both hash families and all three security categories.
+//!
+//! Versions before 0.4.0 implemented round-3 SPHINCS+ semantics and are
+//! **not** interoperable with FIPS 205 implementations (or with 0.4.0+).
+//!
 //! # Quick Start
 //!
 //! ```rust
@@ -41,4 +57,4 @@ pub mod wots;
 
 pub use params::SlhDsaMode;
 pub use safe_api::{SlhDsaError, SlhDsaKeyPair, SlhDsaSignature};
-pub use sign::{keygen_seed, sign, verify};
+pub use sign::{keygen_seed, sign, sign_ctx, sign_internal, verify, verify_ctx, verify_internal};

@@ -129,3 +129,44 @@ pub fn wots_sign(sig: &mut [u8], msg: &[u8], ctx: &SpxCtx, addr: &mut Addr, mode
     }
     sk.zeroize();
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::params::SLH_DSA_SHAKE_128F;
+
+    #[test]
+    fn test_base_w_w16_nibbles() {
+        let mut out = [0u32; 4];
+        base_w(&mut out, 4, &[0xAB, 0xCD], 16);
+        assert_eq!(out, [0xA, 0xB, 0xC, 0xD]);
+    }
+
+    #[test]
+    fn test_base_w_w256_bytes() {
+        let mut out = [0u32; 2];
+        base_w(&mut out, 2, &[0xAB, 0xCD], 256);
+        assert_eq!(out, [0xAB, 0xCD]);
+    }
+
+    #[test]
+    fn test_chain_lengths_checksum() {
+        let mode = SLH_DSA_SHAKE_128F;
+        let mut lengths = vec![0u32; mode.wots_len()];
+
+        // All-zero message: csum = len1 * (w - 1) = 32 * 15 = 480 = 0x1E0.
+        // Left-shifted by 4 (12-bit checksum) -> 0x1E00 -> nibbles [1, 14, 0].
+        chain_lengths(&mut lengths, &[0u8; 16], &mode);
+        assert!(lengths[..mode.wots_len1()].iter().all(|&v| v == 0));
+        assert_eq!(&lengths[mode.wots_len1()..], &[1, 14, 0]);
+
+        // All-0xFF message: every digit is w-1, csum = 0.
+        chain_lengths(&mut lengths, &[0xFFu8; 16], &mode);
+        assert!(lengths[..mode.wots_len1()].iter().all(|&v| v == 15));
+        assert_eq!(&lengths[mode.wots_len1()..], &[0, 0, 0]);
+
+        // Every digit must be < w.
+        chain_lengths(&mut lengths, &[0x37u8; 16], &mode);
+        assert!(lengths.iter().all(|&v| v < mode.wots_w as u32));
+    }
+}

@@ -14,7 +14,7 @@ pub enum HashFamily {
 }
 
 /// SLH-DSA parameter set.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SlhDsaMode {
     #[cfg_attr(feature = "serde", serde(skip, default = "default_name"))]
@@ -33,6 +33,23 @@ pub struct SlhDsaMode {
     /// Winternitz parameter.
     pub wots_w: usize,
 }
+
+/// Equality compares the numeric parameters only. `name` is excluded because
+/// it is a display label and is skipped during serde deserialization, so a
+/// round-tripped mode must still compare equal to its source constant.
+impl PartialEq for SlhDsaMode {
+    fn eq(&self, other: &Self) -> bool {
+        self.hash == other.hash
+            && self.n == other.n
+            && self.full_height == other.full_height
+            && self.d == other.d
+            && self.fors_height == other.fors_height
+            && self.fors_trees == other.fors_trees
+            && self.wots_w == other.wots_w
+    }
+}
+
+impl Eq for SlhDsaMode {}
 
 impl SlhDsaMode {
     pub const fn wots_logw(&self) -> usize {
@@ -270,5 +287,84 @@ mod tests {
         assert_eq!(m.pk_bytes(), 64);
         assert_eq!(m.sk_bytes(), 128);
         assert_eq!(m.tree_height(), 8);
+    }
+
+    #[test]
+    fn test_all_fips205_sig_sizes() {
+        // FIPS 205 Table 2.
+        let cases = [
+            (SLH_DSA_SHAKE_128S, 7856),
+            (SLH_DSA_SHAKE_128F, 17088),
+            (SLH_DSA_SHAKE_192S, 16224),
+            (SLH_DSA_SHAKE_192F, 35664),
+            (SLH_DSA_SHAKE_256S, 29792),
+            (SLH_DSA_SHAKE_256F, 49856),
+            (SLH_DSA_SHA2_128S, 7856),
+            (SLH_DSA_SHA2_128F, 17088),
+            (SLH_DSA_SHA2_192S, 16224),
+            (SLH_DSA_SHA2_192F, 35664),
+            (SLH_DSA_SHA2_256S, 29792),
+            (SLH_DSA_SHA2_256F, 49856),
+        ];
+        for (m, sig) in cases {
+            assert_eq!(m.sig_bytes(), sig, "{}", m.name);
+            assert_eq!(m.seed_bytes(), 3 * m.n, "{}", m.name);
+            assert_eq!(
+                m.dgst_bytes(),
+                m.fors_msg_bytes() + m.tree_bytes() + m.leaf_bytes(),
+                "{}",
+                m.name
+            );
+            assert_eq!(m.leaf_bits(), m.tree_height(), "{}", m.name);
+        }
+    }
+
+    #[test]
+    fn test_wots_w256_derived_params() {
+        // No FIPS 205 set uses w = 256, but the parameter math must hold.
+        let mut m = SLH_DSA_SHAKE_128F;
+        m.wots_w = 256;
+        assert_eq!(m.wots_logw(), 8);
+        assert_eq!(m.wots_len1(), 16);
+        assert_eq!(m.wots_len2(), 2);
+        assert_eq!(m.wots_len(), 18);
+
+        m.n = 1;
+        assert_eq!(m.wots_len2(), 1);
+    }
+
+    #[test]
+    fn test_wots_w16_len2_branches() {
+        let mut m = SLH_DSA_SHAKE_128F;
+        assert_eq!(m.wots_len2(), 3); // 8 < n <= 136
+        m.n = 8;
+        assert_eq!(m.wots_len2(), 2); // n <= 8
+        m.n = 200;
+        assert_eq!(m.wots_len2(), 4); // n > 136
+    }
+
+    #[test]
+    fn test_hash_family_eq() {
+        assert_eq!(SLH_DSA_SHAKE_128F.hash, HashFamily::Shake);
+        assert_eq!(SLH_DSA_SHA2_128F.hash, HashFamily::Sha2);
+        assert_ne!(HashFamily::Shake, HashFamily::Sha2);
+    }
+
+    #[test]
+    fn test_mode_eq_ignores_name() {
+        let mut renamed = SLH_DSA_SHAKE_128F;
+        renamed.name = "";
+        assert_eq!(renamed, SLH_DSA_SHAKE_128F);
+        assert_ne!(SLH_DSA_SHAKE_128F, SLH_DSA_SHAKE_128S);
+        assert_ne!(SLH_DSA_SHAKE_128F, SLH_DSA_SHA2_128F);
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn test_mode_serde_roundtrip_eq() {
+        let json = serde_json::to_string(&SLH_DSA_SHAKE_192F).unwrap();
+        let mode: SlhDsaMode = serde_json::from_str(&json).unwrap();
+        assert_eq!(mode, SLH_DSA_SHAKE_192F);
+        assert_eq!(mode.sig_bytes(), SLH_DSA_SHAKE_192F.sig_bytes());
     }
 }

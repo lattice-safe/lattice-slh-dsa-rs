@@ -2,9 +2,10 @@
 //!
 //! pk and sk hashes are validated against the SPHINCS+ C reference
 //! implementation (seed = 0x2a, SHAKE-256 hash).
-//! Sig hashes are Rust-internal golden values (C signing is non-deterministic).
-//!
-//! C reference: https://github.com/sphincs/sphincsplus (ref/ directory)
+//! Sig hashes are golden values for the FIPS 205 deterministic pure
+//! signature (empty context); the signing logic itself is cross-validated
+//! byte-for-byte against the RustCrypto `slh-dsa` crate in
+//! tests/interop_rustcrypto.rs.
 
 use sha3::digest::{ExtendableOutput, Update, XofReader};
 use sha3::Shake256;
@@ -71,7 +72,7 @@ fn test_kat_shake_128f() {
         "SHAKE-128f",
         "65330503cef963c382f57e15ff89315e189cab5ab65d9dd26df0acd928e9a64a",
         "afbe51d903be30665a8da3cdc7b914428599ae3265c72fa3549bd2656ec4a1e4",
-        "afe8b338f45ca19067d724427324c3d64c3e6e02fc0036d4d699ff5519c77b79",
+        "e2e69d2359746fa41d8da44eba1ce761a7cffbb3e45e942858e0b5474e8343b5",
     );
 }
 
@@ -82,7 +83,7 @@ fn test_kat_shake_128s() {
         "SHAKE-128s",
         "0c61f03905f01427cd64d63768a57c2f4b97ee6d6acef510c79bee5ab38dc64f",
         "cbd638291670a9921c8b0b27f71fbf53fec95ca8df391b49012722b86bde2e63",
-        "12f35f76f410a8877c98771d10702644028719dc618d6b9a2a59ce3977618fdc",
+        "2e40778e3af064b0ba5b55df1cab58571170f1a08b21c3a15453b9a38647a5eb",
     );
 }
 
@@ -93,7 +94,7 @@ fn test_kat_shake_192f() {
         "SHAKE-192f",
         "8381134190af68e96e9401935cbc5570499269627d88e9e105ecef5e15bdfc06",
         "79cb68c9442ac02cff16675a8513b5f0b634b13b6bef6defcdb05f9b054ff795",
-        "cda649dbbd6574a3b57bfc899418f2daa028a7b46718d6c365e2ea8f7d0f77a5",
+        "1f73f4054317594a6530f306472f52ab9cd01dfe3c60f59200759d86b6779a3a",
     );
 }
 
@@ -104,7 +105,7 @@ fn test_kat_shake_256f() {
         "SHAKE-256f",
         "2ca8db8d4dfa7bfe1455ea07387dab0a0caed28751a64a7e18f75bdfdfeb5c98",
         "b5e9dd9f665cc65d6ee56773f5617dd596b87fcb0135c7d7eb13312b07c4e0ac",
-        "0e1779827b71aecac0c726001ba1fa3b96a8dc1c3f2a8b06c69e96da750421bc",
+        "22a44c9110e1d5b46b09e60d18e1076aa612d31bf258bb2e5a8c4320cc0b2772",
     );
 }
 
@@ -119,6 +120,6 @@ fn test_kat_sha2_128f() {
         "SHA2-128f",
         "8b83943ac1f9f03681830bc7333f4e53c7e3635ae1025b845b7f53c7111f4dae",
         "7dd247a42a1c6303ce1ff2a12011b54381eee146a2fa2b21242830cafba665c3",
-        "86547b34514050237167fb461994159362b66001aca2bcadd4298a821e9d9dde",
+        "63f58a3d7bd5518c71ab29132cf0a7b35cf0810dc521633dfe7c55ec7e3fe26f",
     );
 }

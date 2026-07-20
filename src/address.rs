@@ -127,3 +127,95 @@ pub fn set_tree_index(addr: &mut Addr, index: u32, mode: &SlhDsaMode) {
     let (_, _, _, _, _, _, _, off_idx) = offsets(mode);
     addr[off_idx..off_idx + 4].copy_from_slice(&index.to_be_bytes());
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::params::{SLH_DSA_SHA2_128F, SLH_DSA_SHAKE_128F};
+
+    #[test]
+    fn test_shake_layout() {
+        let mode = SLH_DSA_SHAKE_128F;
+        let mut addr: Addr = [0; ADDR_BYTES];
+
+        set_layer_addr(&mut addr, 5, &mode);
+        assert_eq!(addr[3], 5);
+
+        set_tree_addr(&mut addr, 0x0102030405060708, &mode);
+        assert_eq!(&addr[8..16], &[1, 2, 3, 4, 5, 6, 7, 8]);
+
+        set_type(&mut addr, ADDR_TYPE_FORSTREE, &mode);
+        assert_eq!(addr[19], ADDR_TYPE_FORSTREE);
+
+        set_keypair_addr(&mut addr, 0xAABB, &mode);
+        assert_eq!(&addr[20..24], &[0, 0, 0xAA, 0xBB]);
+
+        set_chain_addr(&mut addr, 7, &mode);
+        assert_eq!(addr[27], 7);
+
+        set_hash_addr(&mut addr, 9, &mode);
+        assert_eq!(addr[31], 9);
+
+        set_tree_height(&mut addr, 4, &mode);
+        assert_eq!(addr[27], 4);
+
+        set_tree_index(&mut addr, 0x01020304, &mode);
+        assert_eq!(&addr[28..32], &[1, 2, 3, 4]);
+    }
+
+    #[test]
+    fn test_sha2_layout() {
+        let mode = SLH_DSA_SHA2_128F;
+        let mut addr: Addr = [0; ADDR_BYTES];
+
+        set_layer_addr(&mut addr, 5, &mode);
+        assert_eq!(addr[0], 5);
+
+        set_tree_addr(&mut addr, 0x0102030405060708, &mode);
+        assert_eq!(&addr[1..9], &[1, 2, 3, 4, 5, 6, 7, 8]);
+
+        set_type(&mut addr, ADDR_TYPE_WOTSPK, &mode);
+        assert_eq!(addr[9], ADDR_TYPE_WOTSPK);
+
+        set_keypair_addr(&mut addr, 0xAABB, &mode);
+        assert_eq!(&addr[10..14], &[0, 0, 0xAA, 0xBB]);
+
+        set_chain_addr(&mut addr, 7, &mode);
+        assert_eq!(addr[17], 7);
+
+        set_hash_addr(&mut addr, 9, &mode);
+        assert_eq!(addr[21], 9);
+
+        set_tree_height(&mut addr, 4, &mode);
+        assert_eq!(addr[17], 4);
+
+        set_tree_index(&mut addr, 0x01020304, &mode);
+        assert_eq!(&addr[18..22], &[1, 2, 3, 4]);
+    }
+
+    #[test]
+    fn test_copy_subtree_and_keypair_addr() {
+        for mode in [SLH_DSA_SHAKE_128F, SLH_DSA_SHA2_128F] {
+            let mut src: Addr = [0; ADDR_BYTES];
+            set_layer_addr(&mut src, 2, &mode);
+            set_tree_addr(&mut src, 0xDEADBEEF, &mode);
+            set_type(&mut src, ADDR_TYPE_WOTS, &mode);
+            set_keypair_addr(&mut src, 0x1234, &mode);
+
+            // copy_subtree_addr copies layer + tree but not type/keypair.
+            let mut sub: Addr = [0; ADDR_BYTES];
+            copy_subtree_addr(&mut sub, &src, &mode);
+            let mut expect_sub: Addr = [0; ADDR_BYTES];
+            set_layer_addr(&mut expect_sub, 2, &mode);
+            set_tree_addr(&mut expect_sub, 0xDEADBEEF, &mode);
+            assert_eq!(sub, expect_sub, "{}", mode.name);
+
+            // copy_keypair_addr additionally copies the keypair field.
+            let mut kp: Addr = [0; ADDR_BYTES];
+            copy_keypair_addr(&mut kp, &src, &mode);
+            let mut expect_kp = expect_sub;
+            set_keypair_addr(&mut expect_kp, 0x1234, &mode);
+            assert_eq!(kp, expect_kp, "{}", mode.name);
+        }
+    }
+}

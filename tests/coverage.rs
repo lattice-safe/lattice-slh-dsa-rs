@@ -99,6 +99,14 @@ fn test_from_seed_too_short() {
 }
 
 #[test]
+fn test_from_seed_wrong_length_rejected() {
+    // Seed must be exactly 3*n bytes — longer seeds are rejected, not truncated.
+    let mode = SLH_DSA_SHAKE_128F;
+    let result = SlhDsaKeyPair::from_seed(mode, &vec![0u8; mode.seed_bytes() + 1]);
+    assert_eq!(result.err(), Some(SlhDsaError::BadArgument));
+}
+
+#[test]
 fn test_from_bytes_roundtrip_all_modes() {
     let modes = [
         SLH_DSA_SHAKE_128F,

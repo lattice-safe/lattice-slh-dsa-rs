@@ -8,12 +8,15 @@ use alloc::vec;
 use zeroize::Zeroize;
 
 /// Convert message bits to FORS tree indices.
+///
+/// FIPS 205 `base_2b` (Algorithm 4): bits are consumed MSB-first, and each
+/// index takes its `fors_height` bits most-significant-first.
 fn message_to_indices(indices: &mut [u32], m: &[u8], mode: &SlhDsaMode) {
     let mut offset = 0usize;
     for idx in indices.iter_mut().take(mode.fors_trees) {
         *idx = 0;
-        for j in 0..mode.fors_height {
-            *idx ^= (((m[offset >> 3] >> (offset & 0x7)) & 1) as u32) << j;
+        for _ in 0..mode.fors_height {
+            *idx = (*idx << 1) ^ (((m[offset >> 3] >> (7 - (offset & 0x7))) & 1) as u32);
             offset += 1;
         }
     }
@@ -44,6 +47,10 @@ pub fn compute_root(
     mode: &SlhDsaMode,
 ) {
     let n = mode.n;
+    if tree_height == 0 {
+        root[..n].copy_from_slice(&leaf[..n]);
+        return;
+    }
     let mut buffer = vec![0u8; 2 * n];
     let mut leaf_idx = leaf_idx;
     let mut idx_offset = idx_offset;
@@ -262,4 +269,40 @@ pub fn fors_pk_from_sig(
     copy_keypair_addr(&mut fors_pk_addr, fors_addr, mode);
     set_type(&mut fors_pk_addr, ADDR_TYPE_FORSPK, mode);
     thash(pk, &roots, mode.fors_trees, ctx, &fors_pk_addr, mode);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::hash::SpxCtx;
+    use crate::params::SLH_DSA_SHAKE_128F;
+
+    #[test]
+    fn test_message_to_indices_base_2b() {
+        // FIPS 205 base_2b: MSB-first bits, MSB-first within each index.
+        let mut mode = SLH_DSA_SHAKE_128F;
+        mode.fors_height = 4;
+        mode.fors_trees = 4;
+        let mut indices = [0u32; 4];
+        message_to_indices(&mut indices, &[0xAB, 0xCD], &mode);
+        assert_eq!(indices, [0xA, 0xB, 0xC, 0xD]);
+
+        mode.fors_height = 3;
+        mode.fors_trees = 5;
+        let mut indices = [0u32; 5];
+        // 0b10110110, 0b1... -> 101 101 101 ... = 5,5,5,...
+        message_to_indices(&mut indices, &[0b1011_0110, 0b1101_1011], &mode);
+        assert_eq!(indices, [0b101, 0b101, 0b101, 0b101, 0b101]);
+    }
+
+    #[test]
+    fn test_compute_root_zero_height() {
+        let mode = SLH_DSA_SHAKE_128F;
+        let ctx = SpxCtx::new(mode.n);
+        let mut addr: Addr = [0; ADDR_BYTES];
+        let leaf = vec![7u8; mode.n];
+        let mut root = vec![0u8; mode.n];
+        compute_root(&mut root, &leaf, 0, 0, &[], 0, &ctx, &mut addr, &mode);
+        assert_eq!(root, leaf, "height-0 tree root must equal the leaf");
+    }
 }

@@ -8,7 +8,11 @@ Pure Rust implementation of **SLH-DSA** (FIPS 205) — the stateless hash-based 
 
 ## Features
 
-- ✅ **FIPS 205 compliant** — all 12 parameter sets (6 SHAKE + 6 SHA-2)
+- ✅ **FIPS 205 compliant** — all 12 parameter sets (6 SHAKE + 6 SHA-2), pure
+  variant with context strings, deterministic and hedged signing
+- 🔁 **Interop-tested** — keygen and signatures cross-validated byte-for-byte
+  against the independent RustCrypto [`slh-dsa`](https://crates.io/crates/slh-dsa)
+  crate (ACVP-tested) in CI
 - 🦀 **Pure Rust** — no C/ASM dependencies, `#![forbid(unsafe_code)]`
 - 🔒 **`no_std` compatible** — suitable for embedded and WASM targets
 - 🧹 **Zeroization** — sensitive keys cleared on drop

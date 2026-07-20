@@ -15,6 +15,7 @@
 //! ```
 
 extern crate alloc;
+#[cfg(feature = "getrandom")]
 use alloc::vec;
 use alloc::vec::Vec;
 use core::fmt;
@@ -115,9 +116,10 @@ impl SlhDsaKeyPair {
 
     /// Generate a key pair from a deterministic seed.
     ///
-    /// Seed must be exactly `mode.seed_bytes()` bytes (3*n).
+    /// Seed must be exactly `mode.seed_bytes()` bytes (3*n):
+    /// `SK.seed || SK.prf || PK.seed`.
     pub fn from_seed(mode: SlhDsaMode, seed: &[u8]) -> Result<Self, SlhDsaError> {
-        if seed.len() < mode.seed_bytes() {
+        if seed.len() != mode.seed_bytes() {
             return Err(SlhDsaError::BadArgument);
         }
         let (pk, sk) = sign::keygen_seed(mode, seed);
@@ -136,9 +138,24 @@ impl SlhDsaKeyPair {
         })
     }
 
-    /// Sign a message.
+    /// Sign a message (FIPS 205 pure variant, empty context string).
     pub fn sign(&self, msg: &[u8]) -> Result<SlhDsaSignature, SlhDsaError> {
-        let sig_bytes = sign::sign(&self.sk, msg, self.mode);
+        self.sign_with_context(msg, &[])
+    }
+
+    /// Sign a message with a context string (up to 255 bytes).
+    pub fn sign_with_context(
+        &self,
+        msg: &[u8],
+        ctx: &[u8],
+    ) -> Result<SlhDsaSignature, SlhDsaError> {
+        if ctx.len() > 255 {
+            return Err(SlhDsaError::BadArgument);
+        }
+        let sig_bytes = sign::sign_ctx(&self.sk, msg, ctx, self.mode);
+        if sig_bytes.is_empty() {
+            return Err(SlhDsaError::SignFailed);
+        }
         Ok(SlhDsaSignature {
             sig: sig_bytes,
             mode: self.mode,
@@ -190,9 +207,21 @@ impl SlhDsaSignature {
         self.sig.is_empty()
     }
 
-    /// Verify a signature against a public key and message.
+    /// Verify a signature against a public key and message
+    /// (FIPS 205 pure variant, empty context string).
     pub fn verify(sig_bytes: &[u8], pk: &[u8], msg: &[u8], mode: SlhDsaMode) -> bool {
         sign::verify(pk, sig_bytes, msg, mode)
+    }
+
+    /// Verify a signature created with a context string.
+    pub fn verify_with_context(
+        sig_bytes: &[u8],
+        pk: &[u8],
+        msg: &[u8],
+        ctx: &[u8],
+        mode: SlhDsaMode,
+    ) -> bool {
+        sign::verify_ctx(pk, sig_bytes, msg, ctx, mode)
     }
 
     /// Create from raw bytes.

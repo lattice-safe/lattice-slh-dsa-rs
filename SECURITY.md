@@ -4,7 +4,8 @@
 
 | Version | Supported |
 |---------|-----------|
-| 0.3.x   | ✅ Current |
+| 0.4.x   | ✅ Current |
+| 0.3.x   | ⚠️ Not FIPS 205 interoperable — upgrade to 0.4.x |
 
 ## Reporting a Vulnerability
 

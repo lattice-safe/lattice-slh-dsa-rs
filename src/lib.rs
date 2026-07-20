@@ -41,4 +41,4 @@ pub mod wots;
 
 pub use params::SlhDsaMode;
 pub use safe_api::{SlhDsaError, SlhDsaKeyPair, SlhDsaSignature};
-pub use sign::{keygen_seed, sign, verify};
+pub use sign::{keygen_seed, sign, sign_ctx, sign_internal, verify, verify_ctx, verify_internal};
